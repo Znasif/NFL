@@ -58,15 +58,29 @@
 			"Name": "OpenXR",
 			"Enabled": true,
 			"SupportedTargetPlatforms": [
-				"Win64"
+				"Win64",
+				"Linux",
+				"Android",
+				"HoloLens"
 			]
 		},
 		{
 			"Name": "OpenXREyeTracker",
 			"Enabled": true,
 			"SupportedTargetPlatforms": [
-				"Win64"
+				"Win64",
+				"Linux",
+				"Android",
+				"HoloLens"
 			]
+		},
+		{
+			"Name": "Text3D",
+			"Enabled": true
+		},
+		{
+			"Name": "MetaHuman",
+			"Enabled": true
 		}
 	]
 }
