@@ -222,11 +222,11 @@ public:
 	static bool DeleteTextFile(FString SaveDirectory, FString FileName);
 
 	UFUNCTION(BlueprintCallable, Category = "Fileread", meta = (Keywords = "Save"))
-	void LoadFootballCSV(FString SaveDirectory, FFootballArray& football);
+	void LoadFootballCSV(FString playfolder, FString SaveDirectory, FFootballArray& football);
 
 	UFUNCTION(BlueprintCallable, Category = "Fileread", meta = (Keywords = "Save"))
-	void LoadPlayerCSV(FString SaveDirectory, FPlayerArray& someplayer, int& penaltyJerseyNumber, TArray<ENFLPenalty>& penaltyType);
+	void LoadPlayerCSV(FString playfolder, FString SaveDirectory, FPlayerArray& someplayer, int& penaltyJerseyNumber, TArray<ENFLPenalty>& penaltyType);
 
 	UFUNCTION(BlueprintCallable, Category = "Fileread", meta = (Keywords = "Save"))
-	void readRandomFormation(int& penaltyJerseyNumber, bool& penaltyHome, TArray<ENFLPenalty>& penaltyType, TArray<FFootballArray>& Football, TArray<FPlayerArray>& HomeTeam, TArray<FPlayerArray>& AwayTeam);
+	void readRandomFormation(FString playfolder, int& penaltyJerseyNumber, bool& penaltyHome, TArray<ENFLPenalty>& penaltyType, TArray<FFootballArray>& Football, TArray<FPlayerArray>& HomeTeam, TArray<FPlayerArray>& AwayTeam);
 };

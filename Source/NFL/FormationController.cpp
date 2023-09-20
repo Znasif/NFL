@@ -73,7 +73,7 @@ bool AFormationController::DeleteTextFile(FString SaveDirectory, FString FileNam
 	return FPlatformFileManager::Get().GetPlatformFile().DeleteFile(*SaveDirectory);
 }
 
-void AFormationController::LoadFootballCSV(FString SaveDirectory, FFootballArray& football)
+void AFormationController::LoadFootballCSV(FString playfolder, FString SaveDirectory, FFootballArray& football)
 {
 	//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("Football: %s"), *(SaveDirectory)));
 	TArray<FString> loadfoot;
@@ -95,7 +95,7 @@ void AFormationController::LoadFootballCSV(FString SaveDirectory, FFootballArray
 					flag++;
 					//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Float : %s"), *left));
 				}
-				else if (k == 8) {
+				else if (k == 8 && playfolder=="NFL") {
 					const UEnum* EnumPtr = FindObject<UEnum>(ANY_PACKAGE, TEXT("ENFLEvent"), true);
 					if (left.Contains(TEXT(";"))) {
 						TArray<FString> eventarr;
@@ -139,7 +139,7 @@ void AFormationController::LoadFootballCSV(FString SaveDirectory, FFootballArray
 	football = temp;
 }
 
-void AFormationController::LoadPlayerCSV(FString SaveDirectory, FPlayerArray& someplayer, int& penaltyJerseyNumber, TArray<ENFLPenalty>& penaltyType)
+void AFormationController::LoadPlayerCSV(FString playfolder, FString SaveDirectory, FPlayerArray& someplayer, int& penaltyJerseyNumber, TArray<ENFLPenalty>& penaltyType)
 {
 	FPlayerArray temp;
 	//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("Player: %s"), *(SaveDirectory)));
@@ -154,29 +154,32 @@ void AFormationController::LoadPlayerCSV(FString SaveDirectory, FPlayerArray& so
 	// Now Parts[0] contains "17", Parts[1] contains "WR", and Parts[2] contains "AM-POL.csv"
 	temp.playerJerseyNumber = FCString::Atoi(*Parts[0]); // "17"
 	const UEnum* EnumPtr = FindObject<UEnum>(ANY_PACKAGE, TEXT("ENFLPosition"), true);
-	int32 Index = EnumPtr->GetIndexByName(FName(*Parts[1]));
-	if (Index != INDEX_NONE) {
-		temp.playerPosition = static_cast<ENFLPosition>(EnumPtr->GetValueByIndex(Index));
-	}
-	if (Parts.Num() == 3) {
-		FString ThirdPart = Parts[2].LeftChop(4); // "AM-POL"
-		Parts.Empty();
-		if (ThirdPart.Len() == 0) {
-
+	int32 Index;
+	if (playfolder == "NFL") {
+		Index = EnumPtr->GetIndexByName(FName(*Parts[1]));
+		if (Index != INDEX_NONE) {
+			temp.playerPosition = static_cast<ENFLPosition>(EnumPtr->GetValueByIndex(Index));
 		}
-		else {
-			ThirdPart.ParseIntoArray(Parts, TEXT("-"), true);
-			for (int i = 0; i < Parts.Num(); i++) {
-				const UEnum* EnumPtr1 = FindObject<UEnum>(ANY_PACKAGE, TEXT("ENFLPenalty"), true);
-				Index = EnumPtr1->GetIndexByName(FName(*Parts[i]));
-				if (Index != INDEX_NONE) {
-					penaltyType.Add(static_cast<ENFLPenalty>(EnumPtr1->GetValueByIndex(Index)));
-					penaltyJerseyNumber = temp.playerJerseyNumber;
+
+		if (Parts.Num() == 3) {
+			FString ThirdPart = Parts[2].LeftChop(4); // "AM-POL"
+			Parts.Empty();
+			if (ThirdPart.Len() == 0) {
+
+			}
+			else {
+				ThirdPart.ParseIntoArray(Parts, TEXT("-"), true);
+				for (int i = 0; i < Parts.Num(); i++) {
+					const UEnum* EnumPtr1 = FindObject<UEnum>(ANY_PACKAGE, TEXT("ENFLPenalty"), true);
+					Index = EnumPtr1->GetIndexByName(FName(*Parts[i]));
+					if (Index != INDEX_NONE) {
+						penaltyType.Add(static_cast<ENFLPenalty>(EnumPtr1->GetValueByIndex(Index)));
+						penaltyJerseyNumber = temp.playerJerseyNumber;
+					}
 				}
 			}
 		}
 	}
-	
 	
 	TArray<float> readfloat = { 0, 0, 0, 0, 0 };
 	
@@ -217,14 +220,14 @@ void AFormationController::LoadPlayerCSV(FString SaveDirectory, FPlayerArray& so
 
 
 
-void AFormationController::readRandomFormation(int& penaltyJerseyNumber, bool& penaltyHome, TArray<ENFLPenalty>& penaltyType, TArray<FFootballArray>& Football, TArray<FPlayerArray>& HomeTeam, TArray<FPlayerArray>& AwayTeam){
+void AFormationController::readRandomFormation(FString playfolder, int& penaltyJerseyNumber, bool& penaltyHome, TArray<ENFLPenalty>& penaltyType, TArray<FFootballArray>& Football, TArray<FPlayerArray>& HomeTeam, TArray<FPlayerArray>& AwayTeam){
 	TArray<FString> penalties = {"WED", "TRPd", "FCI", "IDP", "ILH", "UOHd", "KCI", "HC", "RNK", "OFK", "CHB", "UNSd", "ILF", "TRP", "UNRd", "DOF", "UNR", "ITK", "OH", "POK", "UNS", "IDT", "IBW", "FMM"};
-	FString Directory = UKismetSystemLibrary::GetProjectSavedDirectory() + "inputs/";// +TEXT("*");
+	FString Directory = UKismetSystemLibrary::GetProjectSavedDirectory() + "inputs/"+playfolder+"/";// +TEXT("*");
 	
 	IPlatformFile& PlatformFile = FPlatformFileManager::Get().GetPlatformFile();
 	TArray<FString> all_plays;
 	LoadTextFromFile(Directory+ "name.csv", all_plays);
-	int32 RandomIndex = FMath::RandRange(1, all_plays.Num() - 1);
+	int32 RandomIndex = FMath::RandRange(0, all_plays.Num() - 1);
 	FString gp = all_plays[RandomIndex];
 	TArray<ENFLPenalty> all_penalties;
 
@@ -233,7 +236,7 @@ void AFormationController::readRandomFormation(int& penaltyJerseyNumber, bool& p
 	{
 		FString ext = ".csv";
 		FFootballArray randfoot;
-		LoadFootballCSV(Directory + gp + "/football.csv", randfoot);
+		LoadFootballCSV(playfolder, Directory + gp + "/football.csv", randfoot);
 		Football.Add(randfoot);
 		
 		
@@ -243,7 +246,7 @@ void AFormationController::readRandomFormation(int& penaltyJerseyNumber, bool& p
 		for (size_t i = 0; i < Homefolder.Num(); i++)
 		{
 			FPlayerArray someplayer;
-			LoadPlayerCSV(Homefolder[i], someplayer, penaltyJerseyNumber, all_penalties);
+			LoadPlayerCSV(playfolder, Homefolder[i], someplayer, penaltyJerseyNumber, all_penalties);
 			HomeTeam.Add(someplayer);
 		}
 		if (all_penalties.Num() > 0) {
@@ -259,7 +262,7 @@ void AFormationController::readRandomFormation(int& penaltyJerseyNumber, bool& p
 		for (size_t i = 0; i < Awayfolder.Num(); i++)
 		{
 			FPlayerArray someplayer;
-			LoadPlayerCSV(Awayfolder[i], someplayer, penaltyJerseyNumber, all_penalties);
+			LoadPlayerCSV(playfolder, Awayfolder[i], someplayer, penaltyJerseyNumber, all_penalties);
 			AwayTeam.Add(someplayer);
 		}
 		penaltyType = all_penalties;
